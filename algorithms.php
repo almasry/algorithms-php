@@ -1,61 +1,43 @@
 <?php
-// Equivalent PHP code for the Encrypt function in the provided Golang code.
 
-function encrypt($text, $key) {
-    // Hash key to ensure it is 256 bits
-    $key = hash('sha256', $key, true);
+// openssl genpkey -algorithm RSA -out private_key.pem
+// openssl rsa -pubout -in private_key.pem -out public_key.pem
 
-    // Generate a random initialization vector (IV) for AES-256 CBC mode.
-    $iv_size = mcrypt_get_iv_size(MCRYPT_RIJNDAEL_128, MCRYPT_MODE_CBC);
-    $iv = mcrypt_create_iv($iv_size, MCRYPT_RAND);
-
-    // Encrypt the plaintext.
-    $ciphertext = mcrypt_encrypt(MCRYPT_RIJNDAEL_128, $key, $text, MCRYPT_MODE_CBC, $iv);
     
-    // Concatenate the IV and the ciphertext and encode them in base64 to create the final encrypted string.
-    $encryptedText = base64_encode($iv . $ciphertext);
+function encryptRSA($plaintext, $public_key_path) {
+    $publicKey = openssl_pkey_get_public(file_get_contents($public_key_path));
+    $ciphertext = null;
     
-    return $encryptedText;
+    openssl_public_encrypt($plaintext, $ciphertext, $publicKey);
+    
+    // Base64 encode to represent binary data as a string
+    return base64_encode($ciphertext);
 }
 
-function decrypt($encryptedText, $key) {
-    // Hash key to ensure it is 256 bits
-    $key = hash('sha256', $key, true);
+function decryptRSA($ciphertext_base64, $private_key_path) {
+    $privateKey = openssl_pkey_get_private(file_get_contents($private_key_path));
+    $ciphertext = base64_decode($ciphertext_base64);
+    $plaintext = null;
     
-    // Decode the base64 encoded encrypted text
-    $encryptedData = base64_decode($encryptedText);
+    openssl_private_decrypt($ciphertext, $plaintext, $privateKey);
     
-    // Extract the IV from the concatenated IV and ciphertext
-    $iv_size = mcrypt_get_iv_size(MCRYPT_RIJNDAEL_128, MCRYPT_MODE_CBC);
-    $iv = substr($encryptedData, 0, $iv_size);
-    
-    // Extract the actual ciphertext from the concatenated IV and ciphertext
-    $ciphertext = substr($encryptedData, $iv_size);
-
-    // Decrypt the ciphertext
-    $plaintext = mcrypt_decrypt(MCRYPT_RIJNDAEL_128, $key, $ciphertext, MCRYPT_MODE_CBC, $iv);
-    
-    return rtrim($plaintext, "\0"); // remove null padding
+    return $plaintext;
 }
 
+// Example usage
+$public_key_path = 'path/to/public_key.pem';
+$private_key_path = 'path/to/private_key.pem';
+$plaintext = 'Hello, RSA!';
+
+echo "Original Message: $plaintext\n";
+
+$ciphertext = encryptRSA($plaintext, $public_key_path);
+echo "Encrypted Message: $ciphertext\n";
+
+$decrypted = decryptRSA($ciphertext, $private_key_path);
+echo "Decrypted Message: $decrypted\n";
 
 
-
-$plaintext = "This is a secret message!";
-$key = "ThisIsASecretKey1234567890123456";  // Ensure key is the right size
-
-$encryptedText = encrypt($plaintext, $key);
-echo "Encrypted: " . $encryptedText . "\n";
-
-$decryptedText = decrypt($encryptedText, $key);
-echo "Decrypted: " . $decryptedText . "\n";
-
-// Basic check to ensure the original and decrypted message are the same
-if ($plaintext === $decryptedText) {
-    echo "Success: Original and decrypted messages match.\n";
-} else {
-    echo "Error: Messages do not match.\n";
-}
 
 
 ?>
