@@ -39,4 +39,24 @@ function decrypt($encryptedText, $key) {
     return $plaintext;
 }
 
+
+
+
+$plaintext = "This is a secret message!";
+$key = "ThisIsASecretKey1234567890123456";  // Ensure key is the right size
+
+$encryptedText = encrypt($plaintext, $key);
+echo "Encrypted: " . $encryptedText . "\n";
+
+$decryptedText = decrypt($encryptedText, $key);
+echo "Decrypted: " . $decryptedText . "\n";
+
+// Basic check to ensure the original and decrypted message are the same
+if ($plaintext === $decryptedText) {
+    echo "Success: Original and decrypted messages match.\n";
+} else {
+    echo "Error: Messages do not match.\n";
+}
+
+
 ?>
